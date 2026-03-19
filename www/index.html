@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Can You Retire?</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --border: #2a3045;
+    --accent: #4ade80;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --text: #e8ecf4;
+    --muted: #8892a4;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+  .container { max-width: 900px; margin: 0 auto; padding: 0 24px 80px; }
+
+  header { padding: 48px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+  header h1 { font-family: var(--serif); font-size: clamp(2.2rem, 5vw, 3.2rem); line-height: 1.15; letter-spacing: -0.02em; }
+  header h1 em { color: var(--accent); font-style: italic; }
+  header p { color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
+
+  .section-label {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .form-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; margin-bottom: 16px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  @media(max-width: 700px) { .grid-3 { grid-template-columns: 1fr 1fr; } .grid-5 { grid-template-columns: 1fr 1fr; } }
+  @media(max-width: 480px) { .grid-2, .grid-3, .grid-5 { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 0.8rem; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; }
+  .field input, .field select {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; color: var(--text); font-family: var(--sans); font-size: 0.95rem;
+    outline: none; transition: border-color 0.15s; width: 100%;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field input.auto-filled { border-color: rgba(74,222,128,0.35); }
+  .field input.user-edited { border-color: rgba(251,191,36,0.6); }
+
+  .prefix-wrap { position: relative; }
+  .prefix-wrap .prefix { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+  .prefix-wrap input { padding-left: 26px; }
+  .suffix-wrap { position: relative; }
+  .suffix-wrap .suffix { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+  .suffix-wrap input { padding-right: 26px; }
+
+  /* SLIDER */
+  .alloc-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .alloc-labels { font-size: 0.8rem; color: var(--muted); }
+  .alloc-pcts { font-size: 1.1rem; font-weight: 600; font-family: var(--serif); }
+  .alloc-pcts .stocks { color: var(--accent); }
+  .alloc-pcts .bonds { color: var(--warn); }
+
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px;
+    background: linear-gradient(to right, var(--accent) var(--pct, 70%), var(--warn) var(--pct, 70%));
+    outline: none; cursor: pointer; border: none; padding: 0;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--text); border: 3px solid var(--surface); box-shadow: 0 0 0 2px var(--accent); cursor: pointer;
+  }
+
+  .alloc-implied {
+    margin-top: 10px; font-size: 0.8rem; color: var(--muted); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;
+    display: flex; gap: 20px; flex-wrap: wrap;
+  }
+  .alloc-implied span { color: var(--text); font-weight: 500; }
+
+  /* ASSET GUIDE */
+  .asset-guide { margin-top: 16px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 0.77rem; }
+  .asset-guide-header {
+    background: var(--bg); padding: 8px 12px; font-size: 0.68rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+    display: grid; grid-template-columns: 1.6fr 0.8fr 0.8fr 0.8fr 1.2fr; gap: 8px;
+  }
+  .asset-guide-row {
+    display: grid; grid-template-columns: 1.6fr 0.8fr 0.8fr 0.8fr 1.2fr; gap: 8px;
+    padding: 8px 12px; border-top: 1px solid var(--border); align-items: center;
+    cursor: pointer; transition: background 0.1s;
+  }
+  .asset-guide-row:hover { background: rgba(74,222,128,0.04); }
+  .asset-guide-row.active { background: rgba(74,222,128,0.08); border-left: 2px solid var(--accent); }
+  .ag-name { font-weight: 500; color: var(--text); }
+  .ag-alloc { color: var(--accent); font-weight: 600; }
+  .ag-vol { color: var(--muted); }
+  .ag-eg { color: var(--muted); font-style: italic; }
+  .guide-note { font-size: 0.7rem; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+  /* DECADE SECTION */
+  .glide-label {
+    display: flex; align-items: center; gap: 10px; margin-top: 14px;
+    font-size: 0.82rem; color: var(--muted); cursor: pointer;
+  }
+  .glide-label input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+
+  /* DECADE FIELD with phase label */
+  .decade-field { display: flex; flex-direction: column; gap: 4px; }
+  .decade-field .decade-phase {
+    font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase;
+    font-weight: 600; padding: 2px 6px; border-radius: 3px; display: inline-block; width: fit-content;
+  }
+  .decade-field .phase-accum { background: rgba(74,222,128,0.12); color: var(--accent); }
+  .decade-field .phase-danger { background: rgba(248,113,113,0.12); color: var(--danger); }
+  .decade-field .phase-retire { background: rgba(251,191,36,0.12); color: var(--warn); }
+
+  /* BUTTON */
+  .calc-btn {
+    width: 100%; padding: 16px; background: var(--accent); color: #0a1a0f;
+    border: none; border-radius: 10px; font-family: var(--sans); font-size: 1rem;
+    font-weight: 600; cursor: pointer; margin-top: 8px; letter-spacing: 0.02em;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .calc-btn:hover { background: #22c55e; transform: translateY(-1px); }
+  .calc-btn:active { transform: translateY(0); }
+
+  /* RESULTS */
+  #results { display: none; margin-top: 40px; }
+  #results.visible { display: block; }
+
+  .success-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media(max-width: 560px) { .success-grid { grid-template-columns: 1fr; } }
+
+  .success-card {
+    background: var(--surface); border: 2px solid var(--border); border-radius: 14px;
+    padding: 24px; position: relative; overflow: hidden;
+  }
+  .success-card.green { border-color: var(--accent); }
+  .success-card.yellow { border-color: var(--warn); }
+  .success-card.red { border-color: var(--danger); }
+  .success-card::before { content: ''; position: absolute; inset: 0; opacity: 0.04; pointer-events: none; }
+  .success-card.green::before { background: var(--accent); }
+  .success-card.yellow::before { background: var(--warn); }
+  .success-card.red::before { background: var(--danger); }
+
+  .success-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .success-pct { font-family: var(--serif); font-size: 3.2rem; line-height: 1; margin-bottom: 4px; }
+  .success-card.green .success-pct { color: var(--accent); }
+  .success-card.yellow .success-pct { color: var(--warn); }
+  .success-card.red .success-pct { color: var(--danger); }
+  .success-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 12px; }
+  .success-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; }
+  .badge-green { background: rgba(74,222,128,0.15); color: var(--accent); }
+  .badge-yellow { background: rgba(251,191,36,0.15); color: var(--warn); }
+  .badge-red { background: rgba(248,113,113,0.15); color: var(--danger); }
+
+  .key-numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  @media(max-width:560px) { .key-numbers { grid-template-columns: 1fr 1fr; } }
+  .kn-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .kn-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+  .kn-val { font-family: var(--serif); font-size: 1.5rem; }
+  .kn-val.ok { color: var(--accent); }
+  .kn-val.warn { color: var(--warn); }
+  .kn-val.bad { color: var(--danger); }
+
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .chart-title { font-family: var(--serif); font-size: 1rem; margin-bottom: 4px; }
+  .chart-subtitle { font-size: 0.78rem; color: var(--muted); margin-bottom: 20px; }
+  canvas { width: 100% !important; }
+
+  .scenarios-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .scenarios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+  .scenario-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 0.78rem; }
+  .sc-name { font-weight: 600; margin-bottom: 2px; }
+  .sc-year { color: var(--muted); font-size: 0.7rem; margin-bottom: 6px; }
+  .sc-result { font-family: var(--serif); font-size: 1.2rem; }
+  .sc-survive { color: var(--accent); }
+  .sc-fail { color: var(--danger); }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; overflow-x: auto; }
+  .table-toggle {
+    display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--muted);
+    cursor: pointer; margin-bottom: 12px; user-select: none;
+  }
+  .table-toggle:hover { color: var(--text); }
+  .table-toggle .toggle-icon { transition: transform 0.2s; }
+  .table-toggle.collapsed .toggle-icon { transform: rotate(-90deg); }
+  #savingRows { transition: opacity 0.2s; }
+  #savingRows.hidden { display: none; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  th { text-align: left; padding: 8px 10px; font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid rgba(42,48,69,0.5); }
+  tr:last-child td { border-bottom: none; }
+  tr.retire-row td { color: var(--accent); font-weight: 500; }
+  td.neg { color: var(--danger); }
+  td.portfolio-cell { font-weight: 600; }
+  tr.saving-row td { color: var(--muted); }
+
+  .disclaimer { margin-top: 32px; font-size: 0.72rem; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 20px; }
+
+  .sim-progress { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin: 16px 0; font-size: 0.85rem; color: var(--muted); }
+  .progress-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.1s; width: 0%; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Can You <em>Retire?</em></h1>
+    <p>Confidence Score + historical stress test. S&amp;P 500 &amp; bond returns 1928–2025 (Damodaran). No fluff.</p>
+  </header>
+
+  <div id="form-section">
+
+    <!-- ABOUT YOU -->
+    <div class="form-section">
+      <div class="section-label">About You</div>
+      <div class="grid-3">
+        <div class="field">
+          <label>Current Age</label>
+          <input type="number" id="currentAge" value="35" min="18" max="80">
+        </div>
+        <div class="field">
+          <label>Retirement Age</label>
+          <input type="number" id="retireAge" value="67" min="50" max="85">
+        </div>
+        <div class="field">
+          <label>Life Expectancy</label>
+          <input type="number" id="lifeExp" value="90" min="70" max="105">
+        </div>
+      </div>
+    </div>
+
+    <!-- SAVINGS (income removed) -->
+    <div class="form-section">
+      <div class="section-label">Savings &amp; Assets</div>
+      <div class="grid-3">
+        <div class="field">
+          <label>Total Investable Assets Today</label>
+          <div class="prefix-wrap"><span class="prefix">$</span>
+            <input type="number" id="currentAssets" value="100000">
+          </div>
+        </div>
+        <div class="field">
+          <label>Annual Savings / Contributions</label>
+          <div class="prefix-wrap"><span class="prefix">$</span>
+            <input type="number" id="annualSavings" value="10000">
+          </div>
+        </div>
+        <div class="field">
+          <label>Savings Growth Rate / Year</label>
+          <select id="savingsGrowth">
+            <option value="0" selected>0% — Flat</option>
+            <option value="0.03">3% — Inflation-match</option>
+            <option value="0.05">5% — Career growth</option>
+            <option value="0.10">10% — High growth</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALLOCATION + ASSET GUIDE -->
+    <div class="form-section">
+      <div class="section-label">Stock / Bond Allocation</div>
+      <div class="alloc-header">
+        <div class="alloc-labels">Stocks (S&P 500) ← → Bonds (US Aggregate)</div>
+        <div class="alloc-pcts">
+          <span class="stocks" id="stockPct">70%</span>
+          <span style="color:var(--border)"> / </span>
+          <span class="bonds" id="bondPct">30%</span>
+        </div>
+      </div>
+      <input type="range" id="allocSlider" min="0" max="100" value="70"
+             style="--pct:70%" oninput="updateAlloc(this.value, true)">
+      <div class="alloc-implied">
+        At retirement: <span id="impliedReturn">—</span> expected return &nbsp;·&nbsp;
+        <span id="impliedVol">—</span> volatility &nbsp;·&nbsp;
+        <span style="color:var(--muted);font-size:0.75rem">Starting alloc → glide path steps down to retirement</span>
+      </div>
+
+      <label class="glide-label">
+        <input type="checkbox" id="glidePath" checked onchange="updateAlloc(document.getElementById('allocSlider').value, true)">
+        Glide path — auto step-down allocation by decade toward retirement
+      </label>
+
+      <!-- ASSET GUIDE -->
+      <div class="asset-guide" style="margin-top:20px">
+        <div class="asset-guide-header">
+          <div>Fund Type</div><div>Stock %</div><div>Exp. Return</div><div>Volatility</div><div>Examples</div>
+        </div>
+        <div class="asset-guide-row" onclick="setAllocFromGuide(100, this)">
+          <div class="ag-name">All Equities</div><div class="ag-alloc">100 / 0</div>
+          <div>11.9%</div><div class="ag-vol">19.4%</div><div class="ag-eg">VTI, FXAIX, SWTSX</div>
+        </div>
+        <div class="asset-guide-row" onclick="setAllocFromGuide(90, this)">
+          <div class="ag-name">Growth Portfolio</div><div class="ag-alloc">90 / 10</div>
+          <div>11.2%</div><div class="ag-vol">17.5%</div><div class="ag-eg">VT, VTWAX</div>
+        </div>
+        <div class="asset-guide-row active" onclick="setAllocFromGuide(70, this)">
+          <div class="ag-name">Balanced Growth</div><div class="ag-alloc">70 / 30</div>
+          <div>9.8%</div><div class="ag-vol">13.7%</div><div class="ag-eg">VBIAX, DGSIX (div.)</div>
+        </div>
+        <div class="asset-guide-row" onclick="setAllocFromGuide(60, this)">
+          <div class="ag-name">Classic 60/40</div><div class="ag-alloc">60 / 40</div>
+          <div>8.9%</div><div class="ag-vol">11.7%</div><div class="ag-eg">VSMGX, VBINX</div>
+        </div>
+        <div class="asset-guide-row" onclick="setAllocFromGuide(50, this)">
+          <div class="ag-name">Dividend Focus</div><div class="ag-alloc">50 / 50</div>
+          <div>8.4%</div><div class="ag-vol">9.9%</div><div class="ag-eg">VYM, SCHD, DVY</div>
+        </div>
+        <div class="asset-guide-row" onclick="setAllocFromGuide(40, this)">
+          <div class="ag-name">Conservative</div><div class="ag-alloc">40 / 60</div>
+          <div>7.5%</div><div class="ag-vol">8.2%</div><div class="ag-eg">VSCGX, FTBFX blend</div>
+        </div>
+        <div class="asset-guide-row" onclick="setAllocFromGuide(20, this)">
+          <div class="ag-name">Income / Bonds</div><div class="ag-alloc">20 / 80</div>
+          <div>6.2%</div><div class="ag-vol">6.5%</div><div class="ag-eg">BND, AGG, VBTLX</div>
+        </div>
+      </div>
+      <div class="guide-note">
+        ↑ Click a row to set the slider. Dividend funds (VYM, SCHD) behave like ~50/50 in volatility terms. Slider drives Confidence Score σ; decade fields below drive the deterministic table.
+      </div>
+    </div>
+
+    <!-- 5 DECADE RETURN FIELDS -->
+    <div class="form-section">
+      <div class="section-label">Expected Returns by Decade</div>
+      <div style="font-size:0.73rem;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Auto-filled using a <strong style="color:var(--text)">retirement-relative glide path</strong> — steepest de-risking in the decade before retirement (the sequence-of-returns danger zone). <strong style="color:var(--accent)">Edit any field to override.</strong> Floor: 20% stocks minimum.
+      </div>
+      <div class="grid-5" id="decadeGrid">
+        <!-- filled by JS -->
+      </div>
+      <div style="margin-top:10px;font-size:0.7rem;color:var(--muted)">
+        Green border = auto-filled &nbsp;·&nbsp; Amber border = manually overridden &nbsp;·&nbsp; Stock % shown in parentheses
+      </div>
+    </div>
+
+    <!-- INCOME SOURCES -->
+    <div class="form-section">
+      <div class="section-label">Retirement Income Sources</div>
+      <div class="grid-3">
+        <div class="field">
+          <label>Social Security (combined)</label>
+          <div class="prefix-wrap"><span class="prefix">$</span>
+            <input type="number" id="ss" value="40000" placeholder="$0">
+          </div>
+        </div>
+        <div class="field">
+          <label>SS Starts at Age</label>
+          <select id="ssAge">
+            <option value="62">62 — Early (−30% benefit)</option>
+            <option value="63">63</option>
+            <option value="64">64</option>
+            <option value="65">65 — Medicare eligible</option>
+            <option value="66">66</option>
+            <option value="67" selected>67 — Full retirement age</option>
+            <option value="68">68</option>
+            <option value="69">69</option>
+            <option value="70">70 — Maximum (+24% benefit)</option>
+          </select>
+          <span class="guide-note" style="margin-top:4px">
+            Get your monthly estimate at
+            <a href="https://www.ssa.gov/benefits/retirement/estimator.html" target="_blank"
+               style="color:var(--accent);text-decoration:none">ssa.gov/estimator ↗</a>
+          </span>
+        </div>
+        <div class="field">
+          <label>Annual Pension</label>
+          <div class="prefix-wrap"><span class="prefix">$</span>
+            <input type="number" id="pension" value="0" placeholder="$0">
+          </div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:16px; max-width:300px">
+        <label>Other Annual Income (rental, part-time, etc.)</label>
+        <div class="prefix-wrap"><span class="prefix">$</span>
+          <input type="number" id="otherIncome" value="0" placeholder="$0">
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPENSES -->
+    <div class="form-section">
+      <div class="section-label">Expenses</div>
+      <div style="font-size:0.73rem;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Set two spending tiers. Common reasons expenses drop at a specific age:
+        <span style="color:var(--text)">mortgage paid off · kids off payroll / tuition done · no more commuting · downsizing · Medicare at 65 replaces private insurance · no longer saving for retirement.</span>
+        Late-life healthcare cost increases are not modeled.
+      </div>
+      <!-- Row 1: early retirement expenses + until age -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:end;margin-bottom:16px">
+        <div class="field">
+          <label>Early Retirement Expenses</label>
+          <div class="prefix-wrap"><span class="prefix">$</span>
+            <input type="number" id="retireExpenses" value="80000">
+          </div>
+        </div>
+        <div class="field" style="max-width:110px">
+          <label>Until Age</label>
+          <input type="number" id="expSwitchAge" value="65" min="55" max="95"
+                 style="text-align:center">
+        </div>
+        <div class="field">
+          <label>Later Retirement Expenses</label>
+          <div class="prefix-wrap"><span class="prefix">$</span>
+            <input type="number" id="retireExpenses2" value="65000">
+          </div>
+        </div>
+      </div>
+      <!-- Pre-retirement expenses (separate, only used during saving phase) -->
+      <div class="field" style="max-width:300px">
+        <label>Current / Pre-Retirement Expenses <span style="font-weight:400;color:var(--muted)">(saving phase only)</span></label>
+        <div class="prefix-wrap"><span class="prefix">$</span>
+          <input type="number" id="currentExpenses" value="100000">
+        </div>
+      </div>
+    </div>
+
+    <!-- ASSUMPTIONS -->
+    <div class="form-section">
+      <div class="section-label">Assumptions</div>
+      <div class="grid-3">
+        <div class="field">
+          <label>Inflation Rate</label>
+          <select id="inflation">
+            <option value="0.02">2%</option>
+            <option value="0.03" selected>3% — Planning default</option>
+            <option value="0.04">4%</option>
+            <option value="0.06">6%</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tax Rate on Withdrawals</label>
+          <select id="taxRate">
+            <option value="0">0% — Roth / no tax</option>
+            <option value="0.10">10%</option>
+            <option value="0.15">15%</option>
+            <option value="0.20" selected>20% — Middle bracket</option>
+            <option value="0.25">25%</option>
+            <option value="0.30">30%</option>
+            <option value="0.35">35%</option>
+            <option value="0.40">40% — High bracket</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Confidence Score Simulations</label>
+          <select id="numSims">
+            <option value="1000" selected>1,000 — Fast</option>
+            <option value="5000">5,000 — Smoother</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-progress" id="simProgress">
+      <div>Running simulations…</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">Run Confidence Score Simulation</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="success-grid">
+      <div class="success-card" id="mcCard">
+        <div class="success-label">Confidence Score</div>
+        <div class="success-pct" id="mcPct">—</div>
+        <div class="success-sub" id="mcSub">—</div>
+        <span class="success-badge" id="mcBadge">—</span>
+      </div>
+      <div class="success-card" id="histCard">
+        <div class="success-label">Historical Stress Test</div>
+        <div class="success-pct" id="histPct">—</div>
+        <div class="success-sub" id="histSub">—</div>
+        <span class="success-badge" id="histBadge">—</span>
+      </div>
+    </div>
+
+    <div class="key-numbers">
+      <div class="kn-card"><div class="kn-label">Portfolio at Retirement</div><div class="kn-val" id="knRetire">—</div></div>
+      <div class="kn-card"><div class="kn-label">Annual Need from Portfolio</div><div class="kn-val" id="knNeed">—</div></div>
+      <div class="kn-card"><div class="kn-label">Safe Withdrawal Rate</div><div class="kn-val" id="knSWR">—</div><div style="font-size:0.68rem;color:var(--muted);margin-top:4px;line-height:1.4">≤4% historically safe · 4–6% elevated risk · &gt;6% high risk</div></div>
+      <div class="kn-card"><div class="kn-label">Median Final Portfolio</div><div class="kn-val" id="knMedian">—</div></div>
+      <div class="kn-card"><div class="kn-label">10th Percentile Outcome</div><div class="kn-val" id="knP10">—</div></div>
+      <div class="kn-card"><div class="kn-label">90th Percentile Outcome</div><div class="kn-val" id="knP90">—</div></div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Portfolio Trajectory</div>
+      <div class="chart-subtitle">Confidence Score band (10th–90th pct shaded) + median + deterministic base case (dashed amber). Retirement phase only.</div>
+      <canvas id="mainChart" height="320"></canvas>
+    </div>
+
+    <div class="scenarios-wrap">
+      <div class="section-label">Named Historical Scenarios</div>
+      <div class="chart-subtitle" style="margin-bottom:0">How your plan fares starting in key market years</div>
+      <div class="scenarios-grid" id="scenariosGrid"></div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="section-label">Year-by-Year Median Outcome</div>
+      <div class="table-toggle" id="savingToggle" onclick="toggleSavingRows()" style="display:none">
+        <span class="toggle-icon">▼</span>
+        <span id="savingToggleLabel">Hide saving years (show retirement only)</span>
+      </div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-bottom:16px">
+        Retirement phase uses the <strong style="color:var(--accent)">median Confidence Score path</strong> (50th percentile) — half of all simulations did better, half worse. Returns vary year-to-year as in real markets. Saving phase uses deterministic decade rates. Nominal figures.
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Year / Age</th>
+            <th>Phase</th>
+            <th>Return</th>
+            <th>Expenses</th>
+            <th>Other Income</th>
+            <th>From Portfolio</th>
+            <th>Portfolio Balance</th>
+          </tr>
+        </thead>
+        <tbody id="savingRows"></tbody>
+        <tbody id="retireRows"></tbody>
+      </table>
+    </div>
+
+    <div class="disclaimer">
+      Confidence Score draws returns from a normal distribution using blended mean &amp; σ for your allocation (Damodaran 1928–2025). Historical stress test tests all rolling windows in the dataset. Retirement-relative glide path: −3%/decade stocks at T−30 to T−20, −8% at T−20 to T−10, −15% at T−10 to T−0, −10% at T+0 to T+10, −5% thereafter. Floor: 20% stocks. For educational purposes only. Consult a fee-only fiduciary advisor before making retirement decisions.
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ── HISTORICAL DATA ────────────────────────────────────────────────────────
+const SP500_RETURNS = {
+  1928:0.4381,1929:-0.0830,1930:-0.2512,1931:-0.4384,1932:-0.0864,1933:0.4998,
+  1934:-0.0119,1935:0.4674,1936:0.3194,1937:-0.3534,1938:0.2928,1939:-0.0110,
+  1940:-0.1067,1941:-0.1277,1942:0.1917,1943:0.2506,1944:0.1903,1945:0.3582,
+  1946:-0.0843,1947:0.0520,1948:0.0570,1949:0.1830,1950:0.3081,1951:0.2368,
+  1952:0.1815,1953:-0.0121,1954:0.5256,1955:0.3260,1956:0.0744,1957:-0.1046,
+  1958:0.4372,1959:0.1206,1960:0.0034,1961:0.2664,1962:-0.0881,1963:0.2261,
+  1964:0.1642,1965:0.1240,1966:-0.0997,1967:0.2380,1968:0.1081,1969:-0.0824,
+  1970:0.0356,1971:0.1422,1972:0.1876,1973:-0.1431,1974:-0.2590,1975:0.3700,
+  1976:0.2383,1977:-0.0698,1978:0.0651,1979:0.1852,1980:0.3174,1981:-0.0470,
+  1982:0.2042,1983:0.2234,1984:0.0615,1985:0.3124,1986:0.1849,1987:0.0581,
+  1988:0.1654,1989:0.3148,1990:-0.0306,1991:0.3023,1992:0.0749,1993:0.0997,
+  1994:0.0133,1995:0.3720,1996:0.2268,1997:0.3310,1998:0.2834,1999:0.2089,
+  2000:-0.0903,2001:-0.1185,2002:-0.2197,2003:0.2836,2004:0.1074,2005:0.0483,
+  2006:0.1561,2007:0.0548,2008:-0.3655,2009:0.2594,2010:0.1482,2011:0.0210,
+  2012:0.1589,2013:0.3215,2014:0.1352,2015:0.0138,2016:0.1177,2017:0.2161,
+  2018:-0.0423,2019:0.3121,2020:0.1802,2021:0.2847,2022:-0.1804,2023:0.2606,
+  2024:0.2488,2025:0.1778
+};
+const BOND_RETURNS = {
+  1928:0.0084,1929:0.0420,1930:0.0454,1931:-0.0256,1932:0.0879,1933:0.0186,
+  1934:0.0796,1935:0.0447,1936:0.0502,1937:0.0138,1938:0.0421,1939:0.0441,
+  1940:0.0540,1941:-0.0202,1942:0.0229,1943:0.0249,1944:0.0258,1945:0.0380,
+  1946:0.0313,1947:0.0092,1948:0.0195,1949:0.0466,1950:0.0043,1951:-0.0030,
+  1952:0.0227,1953:0.0414,1954:0.0329,1955:-0.0134,1956:-0.0226,1957:0.0680,
+  1958:-0.0210,1959:-0.0265,1960:0.1164,1961:0.0206,1962:0.0569,1963:0.0168,
+  1964:0.0373,1965:0.0072,1966:0.0291,1967:-0.0158,1968:0.0327,1969:-0.0501,
+  1970:0.1675,1971:0.0979,1972:0.0282,1973:0.0366,1974:0.0199,1975:0.0361,
+  1976:0.1598,1977:0.0129,1978:-0.0078,1979:0.0067,1980:-0.0299,1981:0.0820,
+  1982:0.3281,1983:0.0320,1984:0.1373,1985:0.2571,1986:0.2428,1987:-0.0496,
+  1988:0.0822,1989:0.1769,1990:0.0624,1991:0.1500,1992:0.0936,1993:0.1421,
+  1994:-0.0804,1995:0.2348,1996:0.0143,1997:0.0994,1998:0.1492,1999:-0.0825,
+  2000:0.1666,2001:0.0557,2002:0.1512,2003:0.0038,2004:0.0449,2005:0.0287,
+  2006:0.0196,2007:0.1021,2008:0.2010,2009:-0.1112,2010:0.0846,2011:0.1604,
+  2012:0.0297,2013:-0.0910,2014:0.1075,2015:0.0128,2016:0.0069,2017:0.0280,
+  2018:-0.0002,2019:0.0964,2020:0.1133,2021:-0.0442,2022:-0.1783,2023:0.0388,
+  2024:-0.0164,2025:0.0780
+};
+
+const NAMED_SCENARIOS = [
+  { name:'1930s Market Crash', startYear:1929, emoji:'💀' },
+  { name:'Worst Modern',     startYear:1966, emoji:'🔥' },
+  { name:'2000 Tech Crash Crash',    startYear:1999, emoji:'💥' },
+  { name:'Financial Crisis', startYear:2007, emoji:'🏚' },
+  { name:'Best Case',        startYear:1982, emoji:'🚀' },
+  { name:'Post-War Boom',    startYear:1949, emoji:'📈' },
+];
+
+// ── PORTFOLIO MATH ─────────────────────────────────────────────────────────
+const SP500_MEAN=0.119, SP500_STD=0.194, BOND_MEAN=0.048, BOND_STD=0.079, CORR=-0.05;
+const STOCK_FLOOR = 0.20; // 20% minimum stocks
+
+function blendedStats(sp) {
+  const bp = 1 - sp;
+  const mean = sp*SP500_MEAN + bp*BOND_MEAN;
+  const variance = sp*sp*SP500_STD*SP500_STD + bp*bp*BOND_STD*BOND_STD + 2*sp*bp*CORR*SP500_STD*BOND_STD;
+  return { mean, std: Math.sqrt(variance) };
+}
+
+function randn() {
+  let u=0,v=0;
+  while(!u) u=Math.random();
+  while(!v) v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+// ── RETIREMENT-RELATIVE GLIDE PATH ─────────────────────────────────────────
+// Given starting stock% and years-to-retirement offset (negative = before, positive = after)
+// Returns the stock% for that period, never below STOCK_FLOOR
+// Step-downs per decade from starting allocation (retirement-relative):
+//   T-30 to T-20: -3%  (mild, long horizon)
+//   T-20 to T-10: -8%  (mid, accumulation peak)
+//   T-10 to T-0:  -15% (danger decade, biggest step)
+//   T+0  to T+10: -10% (early retirement)
+//   T+10+:         -5% (late retirement)
+
+function glideStockPct(startingPct, yearsFromRetirement) {
+  // yearsFromRetirement: negative = pre-retirement, positive = post-retirement
+  // Step-downs are cumulative from starting allocation:
+  //   T-30 to T-20: base (no reduction)
+  //   T-20 to T-10: -3%
+  //   T-10 to T-0:  -11% cumulative (danger decade, biggest step -8%)
+  //   T+0  to T+10: -26% cumulative (-15% at retirement)
+  //   T+10 to T+20: -31% cumulative (-5% early retirement)
+  //   T+20 to T+30: -36% cumulative (-5% mid retirement)
+  //   T+30+:        -39% cumulative (-3% late retirement, approaching floor)
+  const t = yearsFromRetirement;
+  let sp;
+
+  if (t < -20)      sp = startingPct;
+  else if (t < -10) sp = startingPct - 0.03;
+  else if (t < 0)   sp = startingPct - 0.11;
+  else if (t < 10)  sp = startingPct - 0.26;
+  else if (t < 20)  sp = startingPct - 0.31;
+  else if (t < 30)  sp = startingPct - 0.36;
+  else              sp = startingPct - 0.39;
+
+  return Math.max(STOCK_FLOOR, sp);
+}
+
+// Given current age and retirement age, return the 5 decade stock %s
+// Each "decade" is defined by age band anchored to retirement
+function computeDecadeAllocations(startingPct, currentAge, retireAge) {
+  // 5 periods: we generate them age-relative but use retirement-relative logic
+  // Periods: currentAge, currentAge+10, currentAge+20, currentAge+30, currentAge+40
+  const result = [];
+  for (let i = 0; i < 5; i++) {
+    const midAge = currentAge + i * 10 + 5; // midpoint of decade
+    const yFromRetire = midAge - retireAge;
+    const sp = glideStockPct(startingPct, yFromRetire);
+    result.push(sp);
+  }
+  return result;
+}
+
+// For a specific age, find which decade band it falls in and return stock%
+function stockPctForAge(age, currentAge, retireAge, startingPct) {
+  const yFromRetire = age - retireAge;
+  return glideStockPct(startingPct, yFromRetire);
+}
+
+// ── DECADE FIELD RENDERING ─────────────────────────────────────────────────
+let userEditedDecades = [false, false, false, false, false];
+
+function getDecadePhase(decadeIndex, currentAge, retireAge) {
+  const decadeStart = currentAge + decadeIndex * 10;
+  const decadeEnd   = decadeStart + 9;
+  const midAge      = decadeStart + 5;
+  const yFromRetire = midAge - retireAge;
+
+  if (yFromRetire < -10) return { label: 'Accumulation', cls: 'phase-accum' };
+  if (yFromRetire < 0)   return { label: 'Danger Decade', cls: 'phase-danger' };
+  return { label: 'Retirement', cls: 'phase-retire' };
+}
+
+function renderDecadeFields(currentAge, retireAge, startingPct) {
+  const grid = document.getElementById('decadeGrid');
+  const allocs = computeDecadeAllocations(startingPct, currentAge, retireAge);
+
+  grid.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const ageStart = currentAge + i * 10;
+    const ageEnd   = ageStart + 9;
+    const { mean }  = blendedStats(allocs[i]);
+    const phase     = getDecadePhase(i, currentAge, retireAge);
+    const fieldId   = 'r' + (i + 1);
+
+    const div = document.createElement('div');
+    div.className = 'decade-field field';
+    div.innerHTML = `
+      <span class="decade-phase ${phase.cls}">${phase.label}</span>
+      <label>Ages ${ageStart}–${ageEnd > 120 ? ageEnd - 10 + '+' : ageEnd}<br>
+        <span style="color:var(--muted);font-size:0.7em;font-weight:400">(${Math.round(allocs[i]*100)}% stocks)</span>
+      </label>
+      <div class="suffix-wrap">
+        <input type="number" id="${fieldId}" step="0.1" value="${(mean*100).toFixed(1)}"
+               class="auto-filled" oninput="onDecadeEdit(${i}, this)">
+        <span class="suffix">%</span>
+      </div>
+    `;
+    grid.appendChild(div);
+  }
+}
+
+function onDecadeEdit(i, el) {
+  userEditedDecades[i] = true;
+  el.classList.remove('auto-filled');
+  el.classList.add('user-edited');
+}
+
+// ── ALLOCATION UPDATE ──────────────────────────────────────────────────────
+function updateAlloc(val, refillDecades) {
+  const s = parseInt(val);
+  document.getElementById('stockPct').textContent = s + '%';
+  document.getElementById('bondPct').textContent  = (100-s) + '%';
+  document.getElementById('allocSlider').style.setProperty('--pct', s+'%');
+
+  const currentAge = parseInt(document.getElementById('currentAge').value) || 35;
+  const retireAge  = parseInt(document.getElementById('retireAge').value)  || 67;
+
+  // Show allocation AT retirement in the implied stats
+  const retireSP = glideStockPct(s/100, 0);
+  const { mean, std } = blendedStats(retireSP);
+  document.getElementById('impliedReturn').textContent = (mean*100).toFixed(1)+'%';
+  document.getElementById('impliedVol').textContent    = (std*100).toFixed(1)+'%';
+
+  if (refillDecades) {
+    userEditedDecades = [false,false,false,false,false];
+    renderDecadeFields(currentAge, retireAge, s/100);
+  }
+}
+
+function setAllocFromGuide(val, rowEl) {
+  document.querySelectorAll('.asset-guide-row').forEach(r => r.classList.remove('active'));
+  rowEl.classList.add('active');
+  document.getElementById('allocSlider').value = val;
+  updateAlloc(val, true);
+}
+
+// Re-render decade fields when ages change
+document.getElementById('currentAge').addEventListener('change', () => {
+  userEditedDecades = [false,false,false,false,false];
+  updateAlloc(document.getElementById('allocSlider').value, true);
+});
+document.getElementById('retireAge').addEventListener('change', () => {
+  userEditedDecades = [false,false,false,false,false];
+  updateAlloc(document.getElementById('allocSlider').value, true);
+});
+
+// ── TABLE TOGGLE ───────────────────────────────────────────────────────────
+let savingRowsVisible = true;
+function toggleSavingRows() {
+  savingRowsVisible = !savingRowsVisible;
+  const rows = document.getElementById('savingRows');
+  const toggle = document.getElementById('savingToggle');
+  const label  = document.getElementById('savingToggleLabel');
+  rows.classList.toggle('hidden', !savingRowsVisible);
+  toggle.classList.toggle('collapsed', !savingRowsVisible);
+  label.textContent = savingRowsVisible
+    ? 'Hide saving years (show retirement only)'
+    : 'Show saving years';
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+updateAlloc(70, true);
+
+// ── MAIN CALCULATION ───────────────────────────────────────────────────────
+let chartInstance = null;
+
+async function calculate() {
+  const currentAge     = parseInt(document.getElementById('currentAge').value)     || 35;
+  const retireAge      = parseInt(document.getElementById('retireAge').value)      || 67;
+  const lifeExp        = parseInt(document.getElementById('lifeExp').value)        || 90;
+  const currentAssets  = parseFloat(document.getElementById('currentAssets').value)  || 0;
+  const annualSavings  = parseFloat(document.getElementById('annualSavings').value)  || 0;
+  const savingsGrowth  = parseFloat(document.getElementById('savingsGrowth').value)  || 0;
+  const ss             = parseFloat(document.getElementById('ss').value)             || 0;
+  const ssAge          = parseInt(document.getElementById('ssAge').value)            || 67;
+  const pension        = parseFloat(document.getElementById('pension').value)        || 0;
+  const otherIncome    = parseFloat(document.getElementById('otherIncome').value)    || 0;
+  const currentExpenses= parseFloat(document.getElementById('currentExpenses').value)|| 0;
+  const retireExpenses = parseFloat(document.getElementById('retireExpenses').value) || currentExpenses;
+  const retireExpenses2= parseFloat(document.getElementById('retireExpenses2').value)|| retireExpenses;
+  const expSwitchAge   = parseInt(document.getElementById('expSwitchAge').value)     || 999;
+  const inflation      = parseFloat(document.getElementById('inflation').value)      || 0.03;
+
+  // Two-tier expense tracker: returns the correct base expense for a given retirement year.
+  // Each loop tracks its own running inflation-adjusted exp variable; this helper
+  // detects when a mid-retirement switch happens and recalibrates to the new base.
+  // We handle this inline in each loop by checking age vs expSwitchAge each year.
+  const taxRate        = parseFloat(document.getElementById('taxRate').value)        || 0.20;
+  const numSims        = parseInt(document.getElementById('numSims').value)          || 1000;
+  const startingSP     = parseInt(document.getElementById('allocSlider').value) / 100;
+
+  const yearsToRetire = Math.max(0, retireAge - currentAge);
+  const yearsInRetire = Math.max(1, lifeExp - retireAge);
+  const totalYears    = yearsToRetire + yearsInRetire;
+
+  // Read decade rates (respecting user overrides)
+  const decadeRates = [];
+  for (let i = 0; i < 5; i++) {
+    const el  = document.getElementById('r' + (i+1));
+    const val = parseFloat(el?.value);
+    decadeRates.push(isNaN(val) ? blendedStats(glideStockPct(startingSP, (currentAge + i*10 + 5) - retireAge)).mean : val/100);
+  }
+
+  function getDecadeRate(age) {
+    const idx = Math.min(4, Math.floor((age - currentAge) / 10));
+    return decadeRates[idx];
+  }
+
+  // ── Pre-retirement accumulation (deterministic, using decade rates)
+  let portfolioAtRetire = currentAssets;
+  let savingsY = annualSavings;
+  for (let y = 0; y < yearsToRetire; y++) {
+    const age = currentAge + y;
+    portfolioAtRetire *= (1 + getDecadeRate(age));
+    portfolioAtRetire += savingsY;
+    savingsY *= (1 + savingsGrowth);
+  }
+
+  // For MC: get stock% for a given year IN retirement using glide path
+  function getMCSP(yearInRetire) {
+    const age = retireAge + yearInRetire;
+    return glideStockPct(startingSP, age - retireAge);
+  }
+
+  // ── Confidence Score
+  document.getElementById('simProgress').style.display = 'block';
+  const fill = document.getElementById('progressFill');
+  await new Promise(r => setTimeout(r, 40));
+
+  // ── Single-pass Confidence Score: run all sims, store full paths for bands + median
+  // Store paths for band calculation (cap at 500 for memory) but track all final values
+  const MAX_STORED = 500;
+  const finalValues = [];
+  const allPaths = [];
+  for (let i = 0; i < numSims; i++) {
+    let p = portfolioAtRetire, exp = retireExpenses;
+    let onTier2 = false;
+    let survived = true;
+    const storePath = i < MAX_STORED;
+    const path = storePath ? [p] : null;
+    for (let y = 0; y < yearsInRetire; y++) {
+      const sp = getMCSP(y);
+      const { mean: m, std: s } = blendedStats(sp);
+      p *= (1 + m + randn()*s);
+      const age = retireAge + y;
+      if (!onTier2 && age > expSwitchAge) { exp = retireExpenses2; onTier2 = true; }
+      const ssInc = age >= ssAge ? ss : 0;
+      const gap   = Math.max(0, exp - ssInc - pension - otherIncome);
+      p -= gap / (1 - taxRate);
+      exp *= (1 + inflation);
+      if (storePath) path.push(Math.max(0, p));
+      if (p <= 0) { survived = false; p = 0; break; }
+    }
+    finalValues.push(survived ? p : 0);
+    if (storePath) allPaths.push(path);
+    if (i % 200 === 0) fill.style.width = (i/numSims*100)+'%';
+  }
+  fill.style.width = '100%';
+  await new Promise(r => setTimeout(r, 60));
+  document.getElementById('simProgress').style.display = 'none';
+
+  const survivors = finalValues.filter(v => v > 0).length;
+  const mcRate    = (survivors / numSims * 100).toFixed(1);
+
+  const sorted   = [...finalValues].sort((a,b) => a-b);
+  const p10Final = sorted[Math.floor(numSims*0.10)];
+  const p50Final = sorted[Math.floor(numSims*0.50)];
+  const p90Final = sorted[Math.floor(numSims*0.90)];
+
+  // Per-year bands from stored paths
+  const SAMPLE = allPaths.length;
+  const p10Band=[], p50Band=[], p90Band=[];
+  for (let y = 0; y <= yearsInRetire; y++) {
+    const vals = allPaths.map(p => p[y] ?? 0).sort((a,b)=>a-b);
+    p10Band.push(vals[Math.floor(SAMPLE*0.10)]);
+    p50Band.push(vals[Math.floor(SAMPLE*0.50)]);
+    p90Band.push(vals[Math.floor(SAMPLE*0.90)]);
+  }
+
+  // Extract true median path: find stored path whose final value is closest to p50Final
+  // p50Final comes from ALL simulations, so this is the genuine median
+  const medianPath = allPaths.reduce((best, path) => {
+    const finalVal = path[path.length - 1];
+    const bestFinal = best[best.length - 1];
+    return Math.abs(finalVal - p50Final) < Math.abs(bestFinal - p50Final) ? path : best;
+  });
+  // medianPath[y] = portfolio balance after year y withdrawals (index 0 = retirement start)
+
+  // ── Deterministic retirement path for chart
+  const deterPath = [portfolioAtRetire];
+  {
+    let p = portfolioAtRetire, exp = retireExpenses, onTier2 = false;
+    for (let y = 0; y < yearsInRetire; y++) {
+      const age = retireAge + y;
+      p *= (1 + getDecadeRate(age));
+      if (!onTier2 && age > expSwitchAge) { exp = retireExpenses2; onTier2 = true; }
+      const ssInc = age >= ssAge ? ss : 0;
+      const gap   = Math.max(0, exp - ssInc - pension - otherIncome);
+      p -= gap / (1 - taxRate);
+      exp *= (1 + inflation);
+      deterPath.push(Math.max(0, p));
+    }
+  }
+
+  // ── Historical stress test
+  const histYears = Object.keys(SP500_RETURNS).map(Number).sort((a,b)=>a-b);
+  const maxStart  = histYears[histYears.length-1] - yearsInRetire;
+  let histWindows=0, histSurvive=0;
+
+  function simHistPath(startYear) {
+    let p = portfolioAtRetire, exp = retireExpenses, onTier2 = false;
+    for (let y = 0; y < yearsInRetire; y++) {
+      const yr = startYear + y;
+      if (SP500_RETURNS[yr] === undefined) break;
+      const sp = getMCSP(y), bp = 1-sp;
+      p *= (1 + sp*SP500_RETURNS[yr] + bp*BOND_RETURNS[yr]);
+      const age = retireAge + y;
+      if (!onTier2 && age > expSwitchAge) { exp = retireExpenses2; onTier2 = true; }
+      const ssInc = age >= ssAge ? ss : 0;
+      const gap   = Math.max(0, exp - ssInc - pension - otherIncome);
+      p -= gap / (1 - taxRate);
+      exp *= (1 + inflation);
+      if (p <= 0) return 0;
+    }
+    return p;
+  }
+
+  for (let yr = histYears[0]; yr <= maxStart; yr++) {
+    if (SP500_RETURNS[yr] !== undefined) {
+      histWindows++;
+      if (simHistPath(yr) > 0) histSurvive++;
+    }
+  }
+  const histRate = histWindows > 0 ? (histSurvive/histWindows*100).toFixed(1) : '—';
+  const scenarioResults = NAMED_SCENARIOS.map(sc => ({ ...sc, survived: simHistPath(sc.startYear) > 0 }));
+
+  // ── Build table rows
+  // Saving phase: deterministic (no variance pre-retirement)
+  // Retirement phase: uses median MC path for honest year-by-year balance
+  const savingRowsHTML = [], retireRowsHTML = [];
+  {
+    let p = currentAssets, exp = currentExpenses, svY = annualSavings;
+    // Saving rows
+    for (let y = 0; y < yearsToRetire; y++) {
+      const age  = currentAge + y;
+      const rate = getDecadeRate(age);
+      const yr   = new Date().getFullYear() + y;
+      p *= (1 + rate);
+      p += svY;
+      svY *= (1 + savingsGrowth);
+      savingRowsHTML.push(`
+        <tr class="saving-row">
+          <td>${yr} / Age ${age}</td>
+          <td>Saving</td>
+          <td>${(rate*100).toFixed(1)}%</td>
+          <td>—</td><td>—</td><td>—</td>
+          <td class="portfolio-cell">${fmt(p)}</td>
+        </tr>`);
+      exp *= (1 + inflation);
+    }
+    // Retirement rows: drive portfolio from medianPath, compute expenses/income inline
+    let retireExp = retireExpenses, onTier2 = false;
+    for (let y = 0; y < yearsInRetire; y++) {
+      const age        = retireAge + y;
+      const yr         = new Date().getFullYear() + yearsToRetire + y;
+      if (!onTier2 && age >= expSwitchAge) { retireExp = retireExpenses2; onTier2 = true; }
+      const ssInc      = age >= ssAge ? ss : 0;
+      const totalOther = ssInc + pension + otherIncome;
+      const gap        = Math.max(0, retireExp - totalOther);
+      const gross      = gap / (1 - taxRate);
+      const balance    = medianPath[y + 1]; // medianPath[0] = start, [1] = after year 1, etc.
+      const isFirst    = y === 0;
+      const isTierSwitch = age === expSwitchAge + 1;
+      // Compute implied return for this year from medianPath
+      const prevBal    = medianPath[y];
+      const impliedRet = prevBal > 0 ? ((balance + gross - prevBal) / prevBal * 100).toFixed(1) : '—';
+      retireRowsHTML.push(`
+        <tr class="${isFirst ? 'retire-row' : ''}">
+          <td>${isFirst ? '► ' : ''}${yr} / Age ${age}${isTierSwitch ? ' <span style="color:var(--warn);font-size:0.7em">↓ expenses</span>' : ''}</td>
+          <td>Retired</td>
+          <td>${impliedRet !== '—' ? impliedRet + '%' : '—'} <span style="color:var(--muted);font-size:0.7em">(MC)</span></td>
+          <td>${fmt(retireExp)}</td>
+          <td>${fmt(totalOther)}</td>
+          <td class="${balance <= 0 ? 'neg' : ''}">${fmt(gross)}</td>
+          <td class="portfolio-cell ${balance <= 0 ? 'neg' : ''}">${fmt(Math.max(0, balance))}</td>
+        </tr>`);
+      retireExp *= (1 + inflation);
+    }
+  }
+
+  // ── Key numbers (use tier 1 expenses — what you need at retirement day 1)
+  const ssAtRetire     = retireAge >= ssAge ? ss : 0;
+  const totalOtherAtR  = ssAtRetire + pension + otherIncome;
+  const gapAtRetire    = Math.max(0, retireExpenses - totalOtherAtR);
+  const grossAtRetire  = gapAtRetire / (1 - taxRate);
+  const swr            = portfolioAtRetire > 0 ? (grossAtRetire/portfolioAtRetire*100).toFixed(2) : '—';
+
+  // ── RENDER ─────────────────────────────────────────────────────────────────
+  function applyCard(cardId, pctId, subId, badgeId, rate, total, wins) {
+    const r   = parseFloat(rate);
+    const cls = r >= 90 ? 'green' : r >= 75 ? 'yellow' : 'red';
+    document.getElementById(cardId).className = 'success-card ' + cls;
+    document.getElementById(pctId).textContent = rate + '%';
+    document.getElementById(subId).textContent = `${wins.toLocaleString()} of ${total.toLocaleString()} scenarios survived`;
+    const badge = document.getElementById(badgeId);
+    badge.className = 'success-badge badge-' + cls;
+    badge.textContent = r >= 90 ? '✓ On Track' : r >= 75 ? '⚠ Borderline' : '✗ At Risk';
+  }
+
+  document.getElementById('mcCard').querySelector('.success-label').textContent =
+    `Confidence Score (${numSims.toLocaleString()} simulations)`;
+  applyCard('mcCard',   'mcPct',   'mcSub',   'mcBadge',   mcRate,   numSims,     survivors);
+  applyCard('histCard', 'histPct', 'histSub', 'histBadge', histRate, histWindows, histSurvive);
+
+  function kn(id, val, cls) {
+    document.getElementById(id).textContent = val;
+    document.getElementById(id).className   = 'kn-val ' + cls;
+  }
+  const swrN = parseFloat(swr);
+  kn('knRetire', fmt(portfolioAtRetire), 'ok');
+  kn('knNeed',   fmt(grossAtRetire),     grossAtRetire > portfolioAtRetire*0.06 ? 'warn' : 'ok');
+  kn('knSWR',    swr+'%',               swrN<=4?'ok':swrN<=6?'warn':'bad');
+  kn('knMedian', fmt(p50Final),          p50Final>0?'ok':'bad');
+  kn('knP10',    fmt(p10Final),          p10Final>0?'ok':'bad');
+  kn('knP90',    fmt(p90Final),          'ok');
+
+  // Chart — FIXED band direction: 90th on top, median in middle, 10th on bottom
+  const labels = Array.from({length:yearsInRetire+1},(_,i)=>retireAge+i);
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(document.getElementById('mainChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        // Dataset order matters for fill: 90th fills DOWN to median, median fills DOWN to 10th
+        {
+          label: '90th Pct',
+          data: p90Band,
+          borderColor: 'rgba(74,222,128,0.3)',
+          borderWidth: 1,
+          backgroundColor: 'rgba(74,222,128,0.08)',
+          fill: '+1',   // fill down to next dataset (median)
+          pointRadius: 0,
+          tension: 0.4,
+          order: 3,
+        },
+        {
+          label: 'Median (MC)',
+          data: p50Band,
+          borderColor: '#4ade80',
+          borderWidth: 2.5,
+          backgroundColor: 'rgba(74,222,128,0.08)',
+          fill: '+1',   // fill down to next dataset (10th)
+          pointRadius: 0,
+          tension: 0.4,
+          order: 2,
+        },
+        {
+          label: '10th Pct',
+          data: p10Band,
+          borderColor: 'rgba(248,113,113,0.5)',
+          borderWidth: 1.5,
+          backgroundColor: 'transparent',
+          fill: false,
+          pointRadius: 0,
+          tension: 0.4,
+          borderDash: [4,4],
+          order: 1,
+        },
+        {
+          label: 'Deterministic',
+          data: deterPath,
+          borderColor: 'rgba(251,191,36,0.7)',
+          borderWidth: 1.5,
+          backgroundColor: 'transparent',
+          fill: false,
+          pointRadius: 0,
+          tension: 0.3,
+          borderDash: [6,3],
+          order: 0,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { labels: { color:'#8892a4', font:{ family:'DM Sans', size:11 } } },
+        tooltip: {
+          backgroundColor:'#1e2333', borderColor:'#2a3045', borderWidth:1,
+          titleColor:'#e8ecf4', bodyColor:'#8892a4',
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.raw)}` }
+        }
+      },
+      scales: {
+        x: { ticks:{color:'#8892a4',font:{size:11}}, grid:{color:'#2a3045'}, title:{display:true,text:'Age',color:'#8892a4'} },
+        y: { ticks:{color:'#8892a4',font:{size:11},callback:v=>fmtShort(v)}, grid:{color:'#2a3045'} }
+      }
+    }
+  });
+
+  // Scenarios
+  document.getElementById('scenariosGrid').innerHTML = scenarioResults.map(sc => `
+    <div class="scenario-card">
+      <div class="sc-name">${sc.emoji} ${sc.name}</div>
+      <div class="sc-year">Retiring: ${sc.startYear}</div>
+      <div class="sc-result ${sc.survived?'sc-survive':'sc-fail'}">${sc.survived?'✓ Survived':'✗ Ran Out'}</div>
+    </div>`).join('');
+
+  // Table — split saving/retire rows, saving rows collapsible
+  document.getElementById('savingRows').innerHTML  = savingRowsHTML.join('');
+  document.getElementById('retireRows').innerHTML  = retireRowsHTML.join('');
+  // Show saving rows toggle only if there are saving years
+  const hasSavingYears = savingRowsHTML.length > 0;
+  document.getElementById('savingToggle').style.display = hasSavingYears ? 'flex' : 'none';
+  if (!hasSavingYears) {
+    document.getElementById('savingRows').classList.remove('hidden');
+  }
+
+  document.getElementById('results').classList.add('visible');
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ── FORMATTERS ─────────────────────────────────────────────────────────────
+function fmt(n) {
+  if (n === undefined || n === null) return '—';
+  if (n < 0) return '-$' + Math.abs(Math.round(n)).toLocaleString();
+  return '$' + Math.round(n).toLocaleString();
+}
+function fmtShort(n) {
+  if (Math.abs(n) >= 1e6) return '$'+(n/1e6).toFixed(1)+'M';
+  if (Math.abs(n) >= 1e3) return '$'+(n/1e3).toFixed(0)+'K';
+  return '$'+n.toFixed(0);
+}
+</script>
+</body>
+</html>

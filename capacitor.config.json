@@ -1,0 +1,8 @@
+{
+  "appId": "com.danjwong.retirementcalculator",
+  "appName": "Retirement Calculator",
+  "webDir": "www"
+  "server": {
+     "allowNavigation": ["fonts.googleapis.com", "fonts.gstatic.com"]
+    }
+}
